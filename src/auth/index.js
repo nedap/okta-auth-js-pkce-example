@@ -13,8 +13,10 @@ responseTypes[AUTH_CODE_GRANT_TYPE] = 'code';
 responseTypes[IMPLICIT_GRANT_TYPE] =  ['id_token', 'token'];
 
 const oktaAuth = new OktaAuth({
-    issuer: ISSUER,
+    issuer: "http://localhost:6001",//ISSUER,
     clientId: CLIENT_ID,
+    authorizeUrl: "http://localhost:6001/oauth/authorize",
+    tokenUrl: "http://localhost:6001/oauth/token",
     redirectUri: REDIRECT_URL
 });
 
