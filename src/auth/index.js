@@ -13,9 +13,12 @@ responseTypes[AUTH_CODE_GRANT_TYPE] = 'code';
 responseTypes[IMPLICIT_GRANT_TYPE] =  ['id_token', 'token'];
 
 const oktaAuth = new OktaAuth({
-    issuer: ISSUER,
+    issuer: "http://localhost:6001",//ISSUER,
     clientId: CLIENT_ID,
-    redirectUri: REDIRECT_URL
+    authorizeUrl: "http://localhost:6001/oauth/authorize",
+    tokenUrl: "http://localhost:6001/oauth/token",
+    redirectUri: REDIRECT_URL,
+    maxClockSkew: 30
 });
 
 export function validateAccess(to, from, next) {
@@ -29,7 +32,7 @@ export function validateAccess(to, from, next) {
             var grantParam = to.path.substring(to.path.lastIndexOf('/') + 1);
             var grantType = (responseTypes[grantParam]) ? grantParam : AUTH_CODE_GRANT_TYPE
             loginOkta(grantType);
-        }          
+        }
     })
     .catch(console.error);
 }
@@ -37,6 +40,7 @@ export function validateAccess(to, from, next) {
 export function loginOkta(grantType) {
     oktaAuth.options.grantType = grantType;
     oktaAuth.token.getWithRedirect({
+        pkce: true,
         responseType: responseTypes[grantType],
         scopes: ['openid', 'profile', 'email']
     });
@@ -48,8 +52,8 @@ export function logout() {
         if (token) {
             var idToken = token.idToken;
             oktaAuth.tokenManager.clear();
-            window.location.href = ISSUER + '/v1/logout?client_id=' + CLIENT_ID + 
-                '&id_token_hint=' + idToken + '&post_logout_redirect_uri=' + window.location.origin 
+            window.location.href = ISSUER + '/v1/logout?client_id=' + CLIENT_ID +
+                '&id_token_hint=' + idToken + '&post_logout_redirect_uri=' + window.location.origin
         } else {
             router.push('/');
         }
@@ -58,7 +62,7 @@ export function logout() {
 
 export function callback() {
     // detect code
-    var grantType = (window.location.href.indexOf('code=') > 0) ? 
+    var grantType = (window.location.href.indexOf('code=') > 0) ?
         AUTH_CODE_GRANT_TYPE : IMPLICIT_GRANT_TYPE;
     oktaAuth.token.parseFromUrl()
     .then((tokens) => {
@@ -77,8 +81,7 @@ export function callback() {
 export function getIdToken() {
     return oktaAuth.tokenManager.get('id_token');
 }
-  
+
 export function getAccessToken() {
     return oktaAuth.tokenManager.get('access_token');
 }
-  
